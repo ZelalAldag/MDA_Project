@@ -32,8 +32,8 @@ pip install -r requirements.txt
 
 ## Datasets
 
-The datasets used in this project are stored in the `/data` folder. 
+The datasets used in this project are stored in the Hugging Face dataset repository. Use the ,`huggingface_hub` library to download the datasets to local storage.
 
-Weather data: 
+Weather data files: 
 - `weather_data_2024-2026.csv`: The hourly weather data for each site for the years 2024 to 2026.
 - `weather_metadata_2024-2026.csv`: The metadata about the weather data stations for each site.
