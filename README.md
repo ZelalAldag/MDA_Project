@@ -29,3 +29,11 @@ Run the following command to install the required dependencies:
 ```
 pip install -r requirements.txt
 ```
+
+## Datasets
+
+The datasets used in this project are stored in the `/data` folder. 
+
+Weather data: 
+- `weather_data_2024-2026.csv`: The hourly weather data for each site for the years 2024 to 2026.
+- `weather_metadata_2024-2026.csv`: The metadata about the weather data stations for each site.
