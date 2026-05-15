@@ -5,8 +5,15 @@ from htmltools import HTML
 import numpy as np
 
 # --- 1. loda data ---
+import os
+
+# get local path
+base_path = os.path.dirname(__file__)
+# merge path
+data_path = os.path.join(base_path, "data", "export_df.csv")
+
 try:
-    app_df = pd.read_csv("/Users/zhaohan/PyCharmMiscProject/export_df.csv")
+    app_df = pd.read_csv(data_path)
 except Exception:
     rng = np.random.default_rng(42)
     app_df = pd.DataFrame({
