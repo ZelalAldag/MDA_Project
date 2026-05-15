@@ -204,7 +204,7 @@ app_ui = ui.page_fluid(
 
     # Top bar
     ui.div(
-        ui.div("Flander Government // CYCLING TRAFFIC MONITOR SYSTEM", class_="topbar-logo"),
+        ui.div("Flanders Government // CYCLING TRAFFIC MONITOR SYSTEM", class_="topbar-logo"),
         ui.div(
             ui.div(class_="live-dot"),
             "LIVE MONITORING",
