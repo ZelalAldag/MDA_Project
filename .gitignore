@@ -1,6 +1,5 @@
-.env
-.venv
-__pycache__
-
-# Ignore data files
-/data
+cd ~/Python_Projects/MDA_Project
+# 把 .idea 和 .venv 都加入黑名单
+echo ".idea/" >> .gitignore
+echo ".venv/" >> .gitignore
+echo "__pycache__/" >> .gitignore
