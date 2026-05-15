@@ -1,5 +1,16 @@
-cd ~/Python_Projects/MDA_Project
-# 把 .idea 和 .venv 都加入黑名单
-echo ".idea/" >> .gitignore
-echo ".venv/" >> .gitignore
-echo "__pycache__/" >> .gitignore
+# Default ignored files
+/shelf/
+/workspace.xml
+# Editor-based HTTP Client requests
+/httpRequests/
+# Ignored default folder with query files
+/queries/
+# Datasource local storage ignored files
+/dataSources/
+/dataSources.local.xml
+.idea/
+.venv/
+__pycache__/
+*.py[cod]
+*$py.class
+.DS_Store
