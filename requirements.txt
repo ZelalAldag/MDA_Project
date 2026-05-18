@@ -7,6 +7,13 @@ requests
 huggingface_hub
 cmdstanpy==1.2.4
 prophet==1.3.0
-scikit-learn==1.8.0
+scikit-learn
 xgboost
 pyarrow
+openmeteo-requests
+requests-cache
+retry-requests
+NBEATS
+keras
+torch
+tensorflow-cpu
