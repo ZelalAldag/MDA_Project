@@ -40,9 +40,9 @@ except Exception:
         'avg_cum_fuel_per_pop':  rng.uniform(0.01, 0.5, n),
     })
 
-# ── 日期筛选：硬编码选择第几天（1=第一天, 2=第二天, ...）──────────────
-# 修改这里的数字来切换日期
-SELECTED_DAY_INDEX = 3   # 1 = 数据中最早的一天，2 = 第二天，以此类推
+# ──  Filter Dates for demo）──────────────
+# 1234 represents different four days of toy data
+SELECTED_DAY_INDEX = 3   # 1234 = Feb 22, 25, 26, 28
 
 if 'day' in app_df.columns:
     available_days = sorted(app_df['day'].unique())
@@ -50,8 +50,8 @@ if 'day' in app_df.columns:
     app_df = app_df[app_df['day'] == selected_day].copy()
 # ─────────────────────────────────────────────────────────────────────────────
 
-SURGE_THRESHOLD    =  100
-BLOCKAGE_THRESHOLD = -80
+SURGE_THRESHOLD    =  120
+BLOCKAGE_THRESHOLD = -60
 
 # ── CSS ─────────────────────────────────────────────────────────
 GLOBAL_CSS = """
@@ -304,7 +304,7 @@ app_ui = ui.page_fluid(
                 class_="table-wrap"
             ),
 
-            # 3. Resilience scatter (interactive/draggable via plotly)
+            # 3. Resilience scatter
             ui.div(
                 ui.div(
                     ui.span("SITE RESILIENCE MONITORING",
@@ -372,8 +372,8 @@ def server(input, output, session):
         return app_df[app_df['hour'] == int(input.hour_sel())].copy()
 
     def make_bar_chart(col, title, color_scale, scale=1.0, unit=""):
-        """按当前选择小时的 municipality 聚合均值，取 Top 10，横向柱状图，支持自定义渐变色和单位换算。"""
-        df = get_data()   # ← 使用 sidebar 滑块选中小时过滤后的数据
+        """select hour in sidebar aggregated by municipality，get Top 10"""
+        df = get_data()   # select hour in sidebar
         if col not in df.columns or 'municipality' not in df.columns:
             return HTML(f"<p style='color:var(--muted);padding:20px'>{col} not found.</p>")
         df_m = (df.groupby('municipality')[col]
@@ -386,7 +386,7 @@ def server(input, output, session):
         if df_m.empty:
             return HTML(f"<p style='color:var(--muted);padding:20px'>No data for {col}.</p>")
 
-        # 单位换算
+        # unit
         df_m['value'] = df_m['value'] * scale
 
         unit_label = f" ({unit})" if unit else ""
@@ -540,7 +540,7 @@ def server(input, output, session):
           <th>SIGNED ERROR</th>{extra_th}<th>STATUS</th>
         </tr></thead><tbody>{''.join(rows)}</tbody></table>""")
 
-    # ── Resilience scatter (interactive / draggable) ──
+    # ── Resilience scatter ──
     @output
     @render.ui
     def resilience_plot():
@@ -555,7 +555,12 @@ def server(input, output, session):
         if df_plot.empty:
             return HTML("<p style='color:var(--muted);padding:20px'>No data for selected hour.</p>")
 
-        df_plot['priority_score'] = df_plot['resilience'] + df_plot['predicted']
+        # Both features are normalized and combined with equal weights
+        pred_min, pred_max = df_plot['predicted'].min(), df_plot['predicted'].max()
+        res_min,  res_max  = df_plot['resilience'].min(), df_plot['resilience'].max()
+        df_plot['pred_norm'] = (df_plot['predicted'] - pred_min) / (pred_max - pred_min + 1e-9)
+        df_plot['res_norm']  = (df_plot['resilience'] - res_min)  / (res_max  - res_min  + 1e-9)
+        df_plot['priority_score'] = 0.5 * df_plot['pred_norm'] + 0.5 * df_plot['res_norm']
 
         p80_res  = df_plot['resilience'].quantile(0.80)   # top 20%
         p90_pred = df_plot['predicted'].quantile(0.90)    # top 10%
@@ -570,9 +575,9 @@ def server(input, output, session):
         y_center = (y_min + y_max) / 2
         y_half   = (y_max - y_min) / 2
 
-        # predicted x轴：视觉缩小为一半（range扩大2倍）
+        # to scale x
         x_range = [x_center - x_half * 2, x_center + x_half * 2]
-        # resilience y轴：视觉放大2倍（range缩小为一半）
+        # to scale y
         y_range = [y_center - y_half / 2, y_center + y_half / 2]
 
         fig = px.scatter(
@@ -622,14 +627,14 @@ def server(input, output, session):
             margin=dict(l=60,r=60,t=20,b=60), height=420,
             hoverlabel=dict(bgcolor="#1e1e1e", bordercolor="#c8f560",
                             font=dict(family="IBM Plex Mono",size=11,color="#e8e8e8")),
-            dragmode='pan',   # ← 默认拖动模式
+            dragmode='pan',
         )
         return HTML(fig.to_html(include_plotlyjs='cdn', full_html=False,
                                 config={'scrollZoom': True, 'displayModeBar': True,
                                         'modeBarButtonsToRemove': ['select2d','lasso2d'],
                                         'displaylogo': False}))
 
-    # ── Priority table (Top 5) ──
+    # ── Priority Top 5 ──
     @output
     @render.ui
     def priority_table():
@@ -638,7 +643,12 @@ def server(input, output, session):
         if res_col not in df.columns:
             return HTML("<p style='color:var(--muted);padding:20px'>Column 'hourly Resilience' not found.</p>")
 
-        df['priority_score'] = df[res_col] + df['predicted']
+        # To normalize both features with equal weights
+        pred_min, pred_max = df['predicted'].min(), df['predicted'].max()
+        res_min,  res_max  = df[res_col].min(),     df[res_col].max()
+        df['pred_norm'] = (df['predicted'] - pred_min) / (pred_max - pred_min + 1e-9)
+        df['res_norm']  = (df[res_col]     - res_min)  / (res_max  - res_min  + 1e-9)
+        df['priority_score'] = 0.5 * df['pred_norm'] + 0.5 * df['res_norm']
         top5 = df.nlargest(5, 'priority_score').reset_index(drop=True)
         has_muni = 'municipality' in df.columns
 
@@ -674,7 +684,7 @@ def server(input, output, session):
           {muni_th}<th>PRIORITY SCORE</th><th>STATUS</th>
         </tr></thead><tbody>{''.join(rows)}</tbody></table>""")
 
-    # 三个图统一使用同一渐变色主题：深色背景 → 青绿 → accent 黄绿
+    # color of the bar plot - accent
     CHART_COLOR_SCALE = [
         [0.0, "#1a2a1a"],
         [0.3, "#1a5c40"],
