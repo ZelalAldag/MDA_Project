@@ -3,6 +3,8 @@ notebook
 pandas
 numpy
 plotly
+matplotlib
+seaborn
 requests
 huggingface_hub
 cmdstanpy==1.2.4
